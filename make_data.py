@@ -36,9 +36,10 @@ def make_word_symbol_set(WORD_PROPERTY,WORD_NUM):
     for i in range(len(SNLI_CONTENT)):
         if SNLI_CONTENT[i] in WORD_PROPERTY_DICT[WORD_PROPERTY]:
             # if SNLI_CONTENT[i+1] != '(' and SNLI_CONTENT[i+1] != ')':
-            if (SNLI_CONTENT[i+1] not in WORD_SYMBOL_SET) and ('	' not in SNLI_CONTENT[i+1]):
+            if (SNLI_CONTENT[i+1] not in WORD_SYMBOL_SET) and ('    ' not in SNLI_CONTENT[i+1]):
                 WORD_SYMBOL_SET.append(SNLI_CONTENT[i+1]);
         if len(WORD_SYMBOL_SET) > WORD_NUM:break;
+    # print(len(WORD_SYMBOL_SET))
     with open(WORD_PROPERTY+'.dst','w') as FILE_STREAM:
         for i in range(WORD_NUM):
             # WORD_VEC_SET.append( THIS_WORD_SYMBOL + '    ' + THIS_WORD_PROPERTY);
@@ -57,7 +58,7 @@ def make_expirience_set(SAMPLES_NUM):
         for i in range(NUM_NN):NN_SET.append(   'NN'   +'___'+ str(np.random.randint(low=0,high=1000))  );
         for i in range(NUM_PR):PR_SET.append(   'PR'   +'___'+ str(np.random.randint(low=0,high=300))   );
         for i in range(NUM_ADJ):ADJ_SET.append(  'ADJ' +'___'+ str(np.random.randint(low=0,high=500))   );
-        for i in range(NUM_ADV):ADV_SET.append(  'ADV' +'___'+ str(np.random.randint(low=0,high=300))   );
+        for i in range(NUM_ADV):ADV_SET.append(  'ADV' +'___'+ str(np.random.randint(low=0,high=200))   );
         # make a sample:
         THIS_SAMPLE = {};
         for PREDICATE in PR_SET:
@@ -76,6 +77,65 @@ def make_expirience_set(SAMPLES_NUM):
     pickle.dump(EXPIRIENCE_SET, SAVED_FILE);            
 
 
+def make_expirience_set_in_symbols(SET_NAME):
+    EXPIRIENCE_SET_IN_SYMBOLS = [];
+    SAVED_FILE = open(SET_NAME, 'rb');
+    EXPIRIENCE_SET = pickle.load(SAVED_FILE);
+    for SAMPLES_PAIR in EXPIRIENCE_SET:
+        DICT_LEFT  = {}; # SAMPLES_PAIR[0];
+        DICT_RIGHT = {}; # SAMPLES_PAIR[1];
+        for FUNC,VARS in SAMPLES_PAIR[0].items():
+            if type(VARS) == list:
+                VARS_LIST = [];
+                for VAR in VARS:VARS_LIST.append(resolve_ID(VAR,'SYMBOL'));
+                DICT_LEFT[resolve_ID(FUNC,'SYMBOL')] = VARS_LIST;
+                continue;
+            DICT_LEFT[resolve_ID(FUNC,'SYMBOL')] = resolve_ID(VARS,'SYMBOL');                        
+        for FUNC,VARS in SAMPLES_PAIR[1].items():
+            if type(VARS) == list:
+                VARS_LIST = [];
+                for VAR in VARS:VARS_LIST.append(resolve_ID(VAR,'SYMBOL'));
+                DICT_RIGHT[resolve_ID(FUNC,'SYMBOL')] = VARS_LIST;
+                continue;
+            DICT_RIGHT[resolve_ID(FUNC,'SYMBOL')] = resolve_ID(VARS,'SYMBOL');    
+        EXPIRIENCE_SET_IN_SYMBOLS.append(  ( DICT_LEFT , DICT_RIGHT ) );
+    print(EXPIRIENCE_SET_IN_SYMBOLS)    
+    SAVED_FILE = open('expirience_set_in_symbols.dst', 'wb');    
+    pickle.dump(EXPIRIENCE_SET_IN_SYMBOLS, SAVED_FILE);        
+
+def resolve_ID(WORD_ID,RETURN_TYPE):
+    if RETURN_TYPE == 'SYMBOL':
+        WORD_ID = WORD_ID.split('___');
+        with open(WORD_ID[0]+'.dst') as DST_FILE:
+            DST_FILE = DST_FILE.readlines();
+        return DST_FILE[int(WORD_ID[1])].replace('\n','');
+    WORD_ID = WORD_ID.split('___');  
+    DST_FILE = np.load(WORD_ID[0]+'.npy');
+    return DST_FILE[int(WORD_ID[1])];  
+
+def visualize_the_logic_sample(SET_NAME):
+    SAVED_FILE = open(SET_NAME, 'rb');
+    LOGIC_SET = pickle.load(SAVED_FILE);
+    pass;
+
+# -------------------- MADE FUNCTIONS ----------------------
+def MADE_make_word_symbol_set():
+    make_word_symbol_set('NN',1000);
+    make_word_symbol_set('PR',300);
+    make_word_symbol_set('ADJ',500);
+    make_word_symbol_set('ADV',200);
+
+def MADE_make_word_vec_set():
+    make_word_vec_set('NN',1000);
+    make_word_vec_set('PR',300);
+    make_word_vec_set('ADJ',500);
+    make_word_vec_set('ADV',200);
+
+
+def MADE_make_expirience_set():
+    make_expirience_set(500);
+    make_expirience_set_in_symbols('expirience_set.dst');  
+
 # -------------------- TEST FUNCTIONS ----------------------
 def TEST_make_word_symbol_set():
     make_word_symbol_set('ADV',200);
@@ -86,4 +146,7 @@ def TEST_make_expirience_set():
 
 if __name__ == '__main__':
     # TEST_make_word_symbol_set();
-    TEST_make_expirience_set();                
+    # TEST_make_expirience_set();                
+    # MADE_make_word_symbol_set();
+    # MADE_make_word_vec_set();
+    MADE_make_expirience_set();
