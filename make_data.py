@@ -12,14 +12,15 @@ WORD_PROPERTY_DICT = {'NN' :['NN'],
                       'PR' :['VBG','VBZ'],
                       'ADJ':['JJ'],
                       'ADV':['RB']};
-NUM_LIM_PR = 2;
-NUM_LIM_NN = 3;
+
+NUM_LIM_PR  = 2;
+NUM_LIM_NN  = 3;
 NUM_LIM_ADJ = 2;
 NUM_LIM_ADV = 1;
 
 SAMPLES_EXAMPLE = ({'PR_122':['NN_13','NN_72'],'ADJ_22':'NN_13','ADJ_67':'NN_72','ADV_187':'PR_122'} ,  {'PR_145':['NN_33','NN_57'],'ADJ_22':'NN_57'});
 
-def make_random_vec(LOW = -5.0,HIGH = 5.0,DIM = 10):
+def make_random_vec(LOW = -5.0,HIGH = 5.0,DIM = 4):
     return np.random.rand(DIM)*(HIGH - LOW) + LOW;
 
 def make_word_vec_set(WORD_PROPERTY,WORD_NUM):
@@ -148,5 +149,5 @@ if __name__ == '__main__':
     # TEST_make_word_symbol_set();
     # TEST_make_expirience_set();                
     # MADE_make_word_symbol_set();
-    # MADE_make_word_vec_set();
-    MADE_make_expirience_set();
+    MADE_make_word_vec_set();
+    # MADE_make_expirience_set();
