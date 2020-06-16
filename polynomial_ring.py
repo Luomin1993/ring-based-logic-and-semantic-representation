@@ -107,7 +107,23 @@ class Queue(object):
 
     def empty(self):
         return len(self.QUEUE) == 0;       
-        
+
+class Divide_Space(object):
+    """docstring for Divide_Space"""
+    def __init__(self, POINT,DIVIDE_SPACE):
+        super(Divide_Space, self).__init__()
+        (self.POINT_DIRECTION_SPACE_T,self.POINT_DIRECTION_SPACE_F) = deal_space(POINT,DIVIDE_SPACE);
+
+    def deal_space(self,POINT,DIVIDE_SPACE):
+        """ POINT_DIRECTION_SPACE = [... (POINT,DIRECTION) ...]  """
+        POINT_DIRECTION_SPACE_T = [];  
+        POINT_DIRECTION_SPACE_F = [];  
+        for DIRECTION in DIVIDE_SPACE[0]:
+            POINT_DIRECTION_SPACE_T.append( (POINT,DIRECTION) );
+        for DIRECTION in DIVIDE_SPACE[1]:
+            POINT_DIRECTION_SPACE_F.append( (POINT,DIRECTION) );    
+        return (POINT_DIRECTION_SPACE_T,POINT_DIRECTION_SPACE_F);
+                        
 
 class Ring(object):
     """ Ring-based Logic """
@@ -119,6 +135,7 @@ class Ring(object):
         self.WORD         =       WORD;
         self.GRAPH        =       None;
         self.DIVIDE_SPACE =       None;
+        self.POINT_DIRECTION_SPACE = None;
 
     def polynomial_func(self,PARAMETERS):
         if len(PARAMETERS)==2:
@@ -195,6 +212,7 @@ class Ring(object):
                 continue; 
             self.DIVIDE_SPACE[1].append(SUB_SPACE);
         # print(self.DIVIDE_SPACE);       
+        self.POINT_DIRECTION_SPACE = Divide_Space(self.VECTOR,self.DIVIDE_SPACE);
 
     def is_subspace_of(self,DIVIDE_SPACE):
         pass;
@@ -203,6 +221,39 @@ class Ring(object):
         print('WORD_ID:' + self.WORD_ID);
         print('WORD:' + self.WORD);
         print('VECTOR:' + str(self.VECTOR));
+
+# ------------------- BI-Relationship ALGO FUNCTIONS ---------------------------
+
+def intersection_set(RING_F,RING_G,POINT_DIRECTION_SPACE_F,POINT_DIRECTION_SPACE_G):
+    """ f ∧ g <=>  C_f|f>0 ∩ C_g|g>0 """
+    INTERSECTION_SET = [];
+    for POINT_DIRECTION_F in POINT_DIRECTION_SPACE_F:
+        for POINT_DIRECTION_G in POINT_DIRECTION_SPACE_G:
+            if RING_F.polynomial_func(POINT_DIRECTION_G[0] + POINT_DIRECTION_G[1]) * RING_G.polynomial_func(POINT_DIRECTION_F[0] + POINT_DIRECTION_F[1]) <0:
+                if RING_F.polynomial_func(POINT_DIRECTION_G[0] + POINT_DIRECTION_G[1])>0:INTERSECTION_SET.append(POINT_DIRECTION_G);
+                else:INTERSECTION_SET.append(POINT_DIRECTION_F);
+    return INTERSECTION_SET;            
+
+def intersection_section(RING_F,RING_G,PARAMETERS_X,PARAMETERS_Y):
+    """ f(x) ∧ g(y) <=>  f(x)>α ∧ g(y)>α """
+    if RING_F.polynomial_func(PARAMETERS_X)>0 and RING_G.polynomial_func(PARAMETERS_Y)>0:
+        return True;
+    return False;    
+
+def infer_established_set(RING_F,RING_G):
+    """ f → g <=>  C_f|f>0 ⊆ C_g|g>0 """
+    ESTABLISHED_SET = [];
+    for POINT_DIRECTION_F in POINT_DIRECTION_SPACE_F:
+        for POINT_DIRECTION_G in POINT_DIRECTION_SPACE_G:
+            if RING_F.polynomial_func(POINT_DIRECTION_G[0] + POINT_DIRECTION_G[1]) * RING_G.polynomial_func(POINT_DIRECTION_F[0] + POINT_DIRECTION_F[1]) <0:
+                if RING_G.polynomial_func(POINT_DIRECTION_F[0] + POINT_DIRECTION_F[1])>0:ESTABLISHED_SET.append(POINT_DIRECTION_F);
+    return ESTABLISHED_SET;
+
+def infer_established_section(RING_F,RING_G,PARAMETERS_X,PARAMETERS_Y,ALPHA):
+    """ f(x) ∧ g(y) <=>  g(y) > f(x) > α """
+    if RING_F.polynomial_func(PARAMETERS_X)>ALPHA and   RING_F.polynomial_func(PARAMETERS_X)<RING_G.polynomial_func(PARAMETERS_Y):
+        return True;
+    return False;    
 
 # -------------------- TEST FUNCTIONS ----------------------
 def TEST_make_a_ring(WORD_ID):
