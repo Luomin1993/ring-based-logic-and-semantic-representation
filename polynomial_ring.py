@@ -18,6 +18,22 @@ import sys
 
 # sys.setrecursionlimit(9000000) #这里设置大一些
 
+# ============ PUBLIC DATA ==============
+
+RUNNING_DATA = {};
+ALPHA        = 10.00;
+
+def read_data():
+    """Read the static data into this;"""
+    ADV_MAT = np.load('ADV.npy');
+    ADJ_MAT = np.load('ADJ.npy');
+    PR_MAT = np.load('PR.npy');    
+    NN_MAT = np.load('NN.npy');
+    for i in range(ADV_MAT.shape[0]):RUNNING_DATA['ADV___'+str(i)] = ADV_MAT[i];
+    for i in range(ADJ_MAT.shape[0]):RUNNING_DATA['ADJ___'+str(i)] = ADJ_MAT[i];
+    for i in range(PR_MAT.shape[0]):RUNNING_DATA['PR___'+str(i)] = PR_MAT[i];
+    for i in range(NN_MAT.shape[0]):RUNNING_DATA['NN___'+str(i)] = NN_MAT[i];
+
 class Binary_Tree(object):
     """docstring for Binary_Tree"""
     def __init__(self, VALUE, LEFT, RIGHT):
@@ -25,6 +41,8 @@ class Binary_Tree(object):
         self.VALUE = VALUE;
         self.LEFT  = LEFT; 
         self.RIGHT =  RIGHT;
+
+
 
 # def tree_like_space_constructing(DELTA,DEEP):
 #        SPACE = [];
@@ -87,6 +105,61 @@ def space_constructing_by_queue(DELTA,DEEP):
         QUEUE.en_queue(RIGHT_ARRAY);
         QUEUE.pop();
     return SPACE; # print(SPACE);    
+
+
+class Logic_Proposition(object):
+    """docstring for Logic_Proposition"""
+    def __init__(self, DICT_PAIR):
+        super(Logic_Proposition, self).__init__()
+        self.DICT_PAIR  = DICT_PAIR;
+        self.CONDITIONS = [];
+        self.CONCLUSIONS = [];
+        self.RING_PARA_PAIR_CD = [];  # 条件...
+        self.RING_PARA_PAIR_CC = [];  # 结论...
+        self.compute_predicate_values();
+
+    def compute_predicate_values(self):
+        for PREDICATE,NOUN in DICT_PAIR[0].items():
+            THIS_WORD = make_data.resolve_ID(PREDICATE,'SYMBOL');
+            THIS_ID   = PREDICATE;
+            THIS_VEC  = RUNNING_DATA[PREDICATE];
+            if type(NOUN)==list: THIS_PARA = [ RUNNING_DATA[NOUN[i]] for i in range(2)];
+            else: THIS_PARA = RUNNING_DATA[NOUN];
+            THIS_RING = Ring(THIS_ID,THIS_WORD,THIS_VEC);
+            THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
+            RING_PARA_PAIR_CD.append( ( THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ) ); # 0是期望调整值 -5代表期望小于5 5代表期望大于5;
+        for PREDICATE,NOUN in DICT_PAIR[1].items():
+            THIS_WORD = make_data.resolve_ID(PREDICATE,'SYMBOL');
+            THIS_ID   = PREDICATE;
+            THIS_VEC  = RUNNING_DATA[PREDICATE];
+            if type(NOUN)==list: THIS_PARA = [ RUNNING_DATA[NOUN[i]] for i in range(2)];
+            else: THIS_PARA = RUNNING_DATA[NOUN];
+            THIS_RING = Ring(THIS_ID,THIS_WORD,THIS_VEC);
+            THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
+            RING_PARA_PAIR_CC.append( ( THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ) ); # 0是期望调整值 -5代表期望小于5 5代表期望大于5;    
+    
+    def optimize_self(self):
+        """ Firstly,adjust the f(x) into > alpha_0; """
+        for RING_PARA_PAIR in RING_PARA_PAIR_CD:
+            self.adjust_to_excepted_value(RING_PARA_PAIR);
+        for RING_PARA_PAIR in RING_PARA_PAIR_CC:
+            self.adjust_to_excepted_value(RING_PARA_PAIR);    
+        """ Secondly,adjust the alpha_0 < q_min(y_n) < p_min(x_n) and alpha_0 < p_max(x_m) < q_max(y_m)"""    
+        P_MIN = 99999999.0; Q_MIN = 99999999.0;P_MAX = 0.0;Q_MAX = 0.0;
+        CD_ID = 0;
+        for RING_PARA_PAIR in RING_PARA_PAIR_CC:
+            if Q_MIN>RING_PARA_PAIR[2]: Q_MIN=RING_PARA_PAIR[2];
+            if Q_MAX<RING_PARA_PAIR[2]: Q_MAX=RING_PARA_PAIR[2];    
+        for RING_PARA_PAIR in RING_PARA_PAIR_CD:
+            if P_MIN>RING_PARA_PAIR[2]: P_MIN=RING_PARA_PAIR[2];RING_PARA_PAIR_CD[CD_ID][3]=Q_MIN;
+            if P_MAX<RING_PARA_PAIR[2]: P_MAX=RING_PARA_PAIR[2];RING_PARA_PAIR_CD[CD_ID][3]=-Q_MAX;
+            CD_ID+=1;
+        for RING_PARA_PAIR in RING_PARA_PAIR_CD:    
+            if RING_PARA_PAIR[3]!=ALPHA:self.adjust_to_excepted_value(RING_PARA_PAIR);        
+
+    def adjust_to_excepted_value(self,RING_PARA_PAIR):
+        pass;    
+            
 
 class Queue(object):
     """docstring for Queue"""
@@ -222,7 +295,7 @@ class Ring(object):
         print('WORD:' + self.WORD);
         print('VECTOR:' + str(self.VECTOR));
 
-# ------------------- BI-Relationship ALGO FUNCTIONS ---------------------------
+# ------------------- BI-Relationship JUDGMENT FUNCTIONS ---------------------------
 
 def intersection_set(RING_F,RING_G,POINT_DIRECTION_SPACE_F,POINT_DIRECTION_SPACE_G):
     """ f ∧ g <=>  C_f|f>0 ∩ C_g|g>0 """
@@ -254,6 +327,14 @@ def infer_established_section(RING_F,RING_G,PARAMETERS_X,PARAMETERS_Y,ALPHA):
     if RING_F.polynomial_func(PARAMETERS_X)>ALPHA and   RING_F.polynomial_func(PARAMETERS_X)<RING_G.polynomial_func(PARAMETERS_Y):
         return True;
     return False;    
+
+# -------------------- BI-Relationship OPTIMIZATION FUNCTIONS ---------------------------
+"""
+当不满足判定的命题条件时
+如何优化调整至满足
+其中命题推理样例以字典对的形式封装
+"""
+
 
 # -------------------- TEST FUNCTIONS ----------------------
 def TEST_make_a_ring(WORD_ID):
