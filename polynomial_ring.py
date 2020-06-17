@@ -144,22 +144,48 @@ class Logic_Proposition(object):
             self.adjust_to_excepted_value(RING_PARA_PAIR);
         for RING_PARA_PAIR in RING_PARA_PAIR_CC:
             self.adjust_to_excepted_value(RING_PARA_PAIR);    
-        """ Secondly,adjust the alpha_0 < q_min(y_n) < p_min(x_n) and alpha_0 < p_max(x_m) < q_max(y_m)"""    
+        """ Secondly,adjust the alpha_0 < p_min(y_n) < q_min(x_n)"""    
         P_MIN = 99999999.0; Q_MIN = 99999999.0;P_MAX = 0.0;Q_MAX = 0.0;
         CD_ID = 0;
         for RING_PARA_PAIR in RING_PARA_PAIR_CC:
             if Q_MIN>RING_PARA_PAIR[2]: Q_MIN=RING_PARA_PAIR[2];
-            if Q_MAX<RING_PARA_PAIR[2]: Q_MAX=RING_PARA_PAIR[2];    
+            # if Q_MAX<RING_PARA_PAIR[2]: Q_MAX=RING_PARA_PAIR[2];    
         for RING_PARA_PAIR in RING_PARA_PAIR_CD:
-            if P_MIN>RING_PARA_PAIR[2]: P_MIN=RING_PARA_PAIR[2];RING_PARA_PAIR_CD[CD_ID][3]=Q_MIN;
-            if P_MAX<RING_PARA_PAIR[2]: P_MAX=RING_PARA_PAIR[2];RING_PARA_PAIR_CD[CD_ID][3]=-Q_MAX;
+            if P_MIN>RING_PARA_PAIR[2]: P_MIN=RING_PARA_PAIR[2];RING_PARA_PAIR_CD[CD_ID][3]=-Q_MIN;
+            # if P_MAX<RING_PARA_PAIR[2]: P_MAX=RING_PARA_PAIR[2];RING_PARA_PAIR_CD[CD_ID][3]=-Q_MAX;
             CD_ID+=1;
         for RING_PARA_PAIR in RING_PARA_PAIR_CD:    
-            if RING_PARA_PAIR[3]!=ALPHA:self.adjust_to_excepted_value(RING_PARA_PAIR);        
+            if RING_PARA_PAIR[3]!=ALPHA:
+                if P_MIN>Q_MIN:self.adjust_to_excepted_value(RING_PARA_PAIR);        
 
     def adjust_to_excepted_value(self,RING_PARA_PAIR):
+        WORD_ID = RING_PARA_PAIR[0].WORD_ID;
+        THIS_ALPHA = RING_PARA_PAIR[2]; # .polynomial_func(RING_PARA_PAIR[1]);
+        TARGET_ALPHA = RING_PARA_PAIR[3];
+        THIS_PARA = RING_PARA_PAIR[1];
+        # ===========  if p(x_1,x_2)  ============
+        if type(THIS_PARA)==list:
+            self.adjust_to_excepted_value_2paras(RING_PARA_PAIR);
+        # adjust less:
+        if TARGET_ALPHA<0:
+            TARGET_ALPHA = abs(TARGET_ALPHA)*0.70;
+            for i in range(size(RUNNING_DATA[WORD_ID])):
+                if abs(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])>1:
+                    # Upadate !!!
+                    RUNNING_DATA[WORD_ID][i] = RUNNING_DATA[WORD_ID][i] - TARGET_ALPHA*(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])/THIS_ALPHA;
+                    break;        
+            return;        
+        # adjust more:
+        TARGET_ALPHA = abs(TARGET_ALPHA)*1.40;
+        for i in range(size(RUNNING_DATA[WORD_ID])):
+            if abs(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])>1:
+                # Upadate !!!
+                RUNNING_DATA[WORD_ID][i] = RUNNING_DATA[WORD_ID][i] - TARGET_ALPHA*(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])/THIS_ALPHA;
+                break;        
+        return;            
+
+    def adjust_to_excepted_value_2paras(self,RING_PARA_PAIR):
         pass;    
-            
 
 class Queue(object):
     """docstring for Queue"""
@@ -407,6 +433,11 @@ def TEST_optimize():
     print(RING.polynomial_func(X1));
     RING.optimize_vector(-0.0001,X1);
     print(RING.polynomial_func(X1));
+
+def TEST_optimize_logic_prop():
+    """   """
+    pass;
+
 
 if __name__ == '__main__':
     # TEST_make_a_ring(); 
