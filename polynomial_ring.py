@@ -131,8 +131,8 @@ class Logic_Proposition(object):
             if THIS_ALPHA<0:
                 THIS_RING.optimize_vector(.0001,THIS_PARA);
                 RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR; 
-            THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
-            self.RING_PARA_PAIR_CD.append( [ THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ] ); # 0是期望调整值 -5代表期望小于5 5代表期望大于5;
+            THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA); # 更新ALPHA;
+            self.RING_PARA_PAIR_CD.append( [ THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ] ); # ALPHA是期望调整值 -5代表期望小于5 5代表期望大于5;
             RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR;  # 更新全局变量;
         for PREDICATE,NOUN in self.DICT_PAIR[1].items():
             THIS_WORD = make_data.resolve_ID(PREDICATE,'SYMBOL');
@@ -144,10 +144,10 @@ class Logic_Proposition(object):
             # 执行optimize_vector;使谓词逻辑为真:
             THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
             if THIS_ALPHA<0:
-                THIS_RING.optimize_vector(-.0001,THIS_PARA);
+                THIS_RING.optimize_vector(.0001,THIS_PARA);
                 RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR; 
-            THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
-            self.RING_PARA_PAIR_CC.append( [ THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ] ); # 0是期望调整值 -5代表期望小于5 5代表期望大于5;    
+            THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA); # 更新ALPHA;
+            self.RING_PARA_PAIR_CC.append( [ THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ] ); # ALPHA是期望调整值 -5代表期望小于5 5代表期望大于5;    
             RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR;  # 更新全局变量;
     
     def optimize_self(self):
@@ -155,24 +155,31 @@ class Logic_Proposition(object):
         for i in range(len(self.RING_PARA_PAIR_CD)):
             self.adjust_to_excepted_value(self.RING_PARA_PAIR_CD[i]);
             self.RING_PARA_PAIR_CD[i][0].VECTOR = RUNNING_DATA[self.RING_PARA_PAIR_CD[i][0].WORD_ID]; # 更新内部VECTOR;
+            self.RING_PARA_PAIR_CD[i][2] = self.RING_PARA_PAIR_CD[i][0].polynomial_func(self.RING_PARA_PAIR_CD[i][1]); # 更新内部ALPHA;
         for i in range(len(self.RING_PARA_PAIR_CC)):
             self.adjust_to_excepted_value(self.RING_PARA_PAIR_CC[i]);    
             self.RING_PARA_PAIR_CC[i][0].VECTOR = RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]; # 更新内部VECTOR;
+            self.RING_PARA_PAIR_CC[i][2] = self.RING_PARA_PAIR_CC[i][0].polynomial_func(self.RING_PARA_PAIR_CC[i][1]); # 更新内部ALPHA;
         """ Secondly,adjust the alpha_0 < p_min(y_n) < q_min(x_n)"""    
         P_MIN = 99999999.0; Q_MIN = 99999999.0;P_MAX = 0.0;Q_MAX = 0.0;
-        CD_ID = 0;
+        CD_ID = 0;CD_MIN=0;
+        # 找到结论中谓词的最小多项式值
         for RING_PARA_PAIR in self.RING_PARA_PAIR_CC:
             if Q_MIN>RING_PARA_PAIR[2]: Q_MIN=RING_PARA_PAIR[2];
-            # if Q_MAX<RING_PARA_PAIR[2]: Q_MAX=RING_PARA_PAIR[2];    
+            # if Q_MAX<RING_PARA_PAIR[2]: Q_MAX=RING_PARA_PAIR[2];
+        # 不满足小于结论最小值的那些环的TARGET_ALPHA更新;        
         for RING_PARA_PAIR in self.RING_PARA_PAIR_CD:
-            if P_MIN>RING_PARA_PAIR[2]: P_MIN=RING_PARA_PAIR[2];self.RING_PARA_PAIR_CD[CD_ID][3]=-Q_MIN;
+            if P_MIN>RING_PARA_PAIR[2]: P_MIN=RING_PARA_PAIR[2];CD_MIN=CD_ID;# self.RING_PARA_PAIR_CD[CD_ID][3]=-Q_MIN;
             # if P_MAX<RING_PARA_PAIR[2]: P_MAX=RING_PARA_PAIR[2];self.RING_PARA_PAIR_CD[CD_ID][3]=-Q_MAX;
             CD_ID+=1;
+        self.RING_PARA_PAIR_CD[CD_MIN][3]=-Q_MIN;    
+        # 优化不满足小于结论最小值的那些环    
         for i in range(len(self.RING_PARA_PAIR_CD)):    
             if self.RING_PARA_PAIR_CD[i][3]!=ALPHA:
                 if P_MIN>Q_MIN:
                     self.adjust_to_excepted_value(self.RING_PARA_PAIR_CD[i]);        
-                    self.RING_PARA_PAIR_CD[i] = RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]; # 更新内部VECTOR;
+                    self.RING_PARA_PAIR_CD[i][0].VECTOR = RUNNING_DATA[self.RING_PARA_PAIR_CD[i][0].WORD_ID]; # 更新内部VECTOR;
+                    self.RING_PARA_PAIR_CD[i][2] = self.RING_PARA_PAIR_CD[i][0].polynomial_func(self.RING_PARA_PAIR_CD[i][1]); # 更新内部ALPHA;
 
     def adjust_to_excepted_value(self,RING_PARA_PAIR):
         WORD_ID = RING_PARA_PAIR[0].WORD_ID;
@@ -185,7 +192,10 @@ class Logic_Proposition(object):
             return;
         # adjust less:
         if TARGET_ALPHA<0:
-            TARGET_ALPHA = abs(TARGET_ALPHA)*0.70;
+        	# 如果已经满足....
+            if THIS_ALPHA<abs(TARGET_ALPHA):return;
+            TARGET_ALPHA = (abs(TARGET_ALPHA) - ALPHA)*0.70 + ALPHA;
+            # print('EXCEPT'+str(TARGET_ALPHA));
             for i in range(RUNNING_DATA[WORD_ID].size ):
                 if abs(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])>1:
                     # Upadate !!!
@@ -193,7 +203,10 @@ class Logic_Proposition(object):
                     break;        
             return;        
         # adjust more:
+        # 如果已经满足....
+        if THIS_ALPHA>abs(TARGET_ALPHA):return;
         TARGET_ALPHA = abs(TARGET_ALPHA)*1.40;
+        # print('EXCEPT'+str(TARGET_ALPHA)+'   '+str(THIS_ALPHA));
         for i in range(RUNNING_DATA[WORD_ID].size ):
             if abs(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])>1:
                 # Upadate !!!
@@ -207,6 +220,8 @@ class Logic_Proposition(object):
         TARGET_ALPHA = RING_PARA_PAIR[3];
         THIS_PARA = RING_PARA_PAIR[1];
         # adjust less:
+        # 如果已经满足....
+        if THIS_ALPHA<abs(TARGET_ALPHA):return;
         if TARGET_ALPHA<0:
             TARGET_ALPHA = abs(TARGET_ALPHA)*0.70;
             for i in range(RUNNING_DATA[WORD_ID].size  ):
@@ -216,9 +231,11 @@ class Logic_Proposition(object):
                     break;        
             return;        
         # adjust more:
+        # 如果已经满足....
+        if THIS_ALPHA>abs(TARGET_ALPHA):return;
         TARGET_ALPHA = abs(TARGET_ALPHA)*1.40;
         for i in range(RUNNING_DATA[WORD_ID].size  ):
-            if abs((THIS_PARA[i][0] - RUNNING_DATA[WORD_ID][i])/(THIS_PARA[i][1] - RUNNING_DATA[WORD_ID][i])    )>1:
+            if abs((THIS_PARA[0][i] - RUNNING_DATA[WORD_ID][i])/(THIS_PARA[1][i] - RUNNING_DATA[WORD_ID][i])    )>1:
                 # Upadate !!!
                 RUNNING_DATA[WORD_ID][i] = ( THIS_PARA[i][1]*(TARGET_ALPHA - THIS_ALPHA) + (THIS_ALPHA-1)*RUNNING_DATA[WORD_ID][i] )/(TARGET_ALPHA-1);
                 break;        
@@ -534,5 +551,5 @@ if __name__ == '__main__':
     # TEST_tree_constructing(2.0,[],4,0);
     # TEST_build_bitree();
     # TEST_space_constructing_by_queue(2.0,4);
-    TEST_optimize();
-    # TEST_optimize_logic_prop();
+    # TEST_optimize();
+    TEST_optimize_logic_prop();
