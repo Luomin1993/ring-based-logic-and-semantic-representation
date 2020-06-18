@@ -119,44 +119,60 @@ class Logic_Proposition(object):
         self.compute_predicate_values();
 
     def compute_predicate_values(self):
-        for PREDICATE,NOUN in DICT_PAIR[0].items():
+        for PREDICATE,NOUN in self.DICT_PAIR[0].items():
             THIS_WORD = make_data.resolve_ID(PREDICATE,'SYMBOL');
             THIS_ID   = PREDICATE;
             THIS_VEC  = RUNNING_DATA[PREDICATE];
             if type(NOUN)==list: THIS_PARA = [ RUNNING_DATA[NOUN[i]] for i in range(2)];
             else: THIS_PARA = RUNNING_DATA[NOUN];
             THIS_RING = Ring(THIS_ID,THIS_WORD,THIS_VEC);
+            # 执行optimize_vector;使谓词逻辑为真:
             THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
-            RING_PARA_PAIR_CD.append( ( THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ) ); # 0是期望调整值 -5代表期望小于5 5代表期望大于5;
-        for PREDICATE,NOUN in DICT_PAIR[1].items():
+            if THIS_ALPHA<0:
+                THIS_RING.optimize_vector(.0001,THIS_PARA);
+                RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR; 
+            THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
+            self.RING_PARA_PAIR_CD.append( [ THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ] ); # 0是期望调整值 -5代表期望小于5 5代表期望大于5;
+            RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR;  # 更新全局变量;
+        for PREDICATE,NOUN in self.DICT_PAIR[1].items():
             THIS_WORD = make_data.resolve_ID(PREDICATE,'SYMBOL');
             THIS_ID   = PREDICATE;
             THIS_VEC  = RUNNING_DATA[PREDICATE];
             if type(NOUN)==list: THIS_PARA = [ RUNNING_DATA[NOUN[i]] for i in range(2)];
             else: THIS_PARA = RUNNING_DATA[NOUN];
             THIS_RING = Ring(THIS_ID,THIS_WORD,THIS_VEC);
+            # 执行optimize_vector;使谓词逻辑为真:
             THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
-            RING_PARA_PAIR_CC.append( ( THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ) ); # 0是期望调整值 -5代表期望小于5 5代表期望大于5;    
+            if THIS_ALPHA<0:
+                THIS_RING.optimize_vector(-.0001,THIS_PARA);
+                RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR; 
+            THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA);
+            self.RING_PARA_PAIR_CC.append( [ THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ] ); # 0是期望调整值 -5代表期望小于5 5代表期望大于5;    
+            RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR;  # 更新全局变量;
     
     def optimize_self(self):
         """ Firstly,adjust the f(x) into > alpha_0; """
-        for RING_PARA_PAIR in RING_PARA_PAIR_CD:
-            self.adjust_to_excepted_value(RING_PARA_PAIR);
-        for RING_PARA_PAIR in RING_PARA_PAIR_CC:
-            self.adjust_to_excepted_value(RING_PARA_PAIR);    
+        for i in range(len(self.RING_PARA_PAIR_CD)):
+            self.adjust_to_excepted_value(self.RING_PARA_PAIR_CD[i]);
+            self.RING_PARA_PAIR_CD[i][0].VECTOR = RUNNING_DATA[self.RING_PARA_PAIR_CD[i][0].WORD_ID]; # 更新内部VECTOR;
+        for i in range(len(self.RING_PARA_PAIR_CC)):
+            self.adjust_to_excepted_value(self.RING_PARA_PAIR_CC[i]);    
+            self.RING_PARA_PAIR_CC[i][0].VECTOR = RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]; # 更新内部VECTOR;
         """ Secondly,adjust the alpha_0 < p_min(y_n) < q_min(x_n)"""    
         P_MIN = 99999999.0; Q_MIN = 99999999.0;P_MAX = 0.0;Q_MAX = 0.0;
         CD_ID = 0;
-        for RING_PARA_PAIR in RING_PARA_PAIR_CC:
+        for RING_PARA_PAIR in self.RING_PARA_PAIR_CC:
             if Q_MIN>RING_PARA_PAIR[2]: Q_MIN=RING_PARA_PAIR[2];
             # if Q_MAX<RING_PARA_PAIR[2]: Q_MAX=RING_PARA_PAIR[2];    
-        for RING_PARA_PAIR in RING_PARA_PAIR_CD:
-            if P_MIN>RING_PARA_PAIR[2]: P_MIN=RING_PARA_PAIR[2];RING_PARA_PAIR_CD[CD_ID][3]=-Q_MIN;
-            # if P_MAX<RING_PARA_PAIR[2]: P_MAX=RING_PARA_PAIR[2];RING_PARA_PAIR_CD[CD_ID][3]=-Q_MAX;
+        for RING_PARA_PAIR in self.RING_PARA_PAIR_CD:
+            if P_MIN>RING_PARA_PAIR[2]: P_MIN=RING_PARA_PAIR[2];self.RING_PARA_PAIR_CD[CD_ID][3]=-Q_MIN;
+            # if P_MAX<RING_PARA_PAIR[2]: P_MAX=RING_PARA_PAIR[2];self.RING_PARA_PAIR_CD[CD_ID][3]=-Q_MAX;
             CD_ID+=1;
-        for RING_PARA_PAIR in RING_PARA_PAIR_CD:    
-            if RING_PARA_PAIR[3]!=ALPHA:
-                if P_MIN>Q_MIN:self.adjust_to_excepted_value(RING_PARA_PAIR);        
+        for i in range(len(self.RING_PARA_PAIR_CD)):    
+            if self.RING_PARA_PAIR_CD[i][3]!=ALPHA:
+                if P_MIN>Q_MIN:
+                    self.adjust_to_excepted_value(self.RING_PARA_PAIR_CD[i]);        
+                    self.RING_PARA_PAIR_CD[i] = RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]; # 更新内部VECTOR;
 
     def adjust_to_excepted_value(self,RING_PARA_PAIR):
         WORD_ID = RING_PARA_PAIR[0].WORD_ID;
@@ -166,10 +182,11 @@ class Logic_Proposition(object):
         # ===========  if p(x_1,x_2)  ============
         if type(THIS_PARA)==list:
             self.adjust_to_excepted_value_2paras(RING_PARA_PAIR);
+            return;
         # adjust less:
         if TARGET_ALPHA<0:
             TARGET_ALPHA = abs(TARGET_ALPHA)*0.70;
-            for i in range(size(RUNNING_DATA[WORD_ID])):
+            for i in range(RUNNING_DATA[WORD_ID].size ):
                 if abs(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])>1:
                     # Upadate !!!
                     RUNNING_DATA[WORD_ID][i] = RUNNING_DATA[WORD_ID][i] - TARGET_ALPHA*(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])/THIS_ALPHA;
@@ -177,7 +194,7 @@ class Logic_Proposition(object):
             return;        
         # adjust more:
         TARGET_ALPHA = abs(TARGET_ALPHA)*1.40;
-        for i in range(size(RUNNING_DATA[WORD_ID])):
+        for i in range(RUNNING_DATA[WORD_ID].size ):
             if abs(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])>1:
                 # Upadate !!!
                 RUNNING_DATA[WORD_ID][i] = RUNNING_DATA[WORD_ID][i] - TARGET_ALPHA*(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])/THIS_ALPHA;
@@ -185,7 +202,27 @@ class Logic_Proposition(object):
         return;            
 
     def adjust_to_excepted_value_2paras(self,RING_PARA_PAIR):
-        pass;    
+        WORD_ID = RING_PARA_PAIR[0].WORD_ID;
+        THIS_ALPHA = RING_PARA_PAIR[2]; # .polynomial_func(RING_PARA_PAIR[1]);
+        TARGET_ALPHA = RING_PARA_PAIR[3];
+        THIS_PARA = RING_PARA_PAIR[1];
+        # adjust less:
+        if TARGET_ALPHA<0:
+            TARGET_ALPHA = abs(TARGET_ALPHA)*0.70;
+            for i in range(RUNNING_DATA[WORD_ID].size  ):
+                if abs((THIS_PARA[i][0] - RUNNING_DATA[WORD_ID][i])/(THIS_PARA[i][1] - RUNNING_DATA[WORD_ID][i])    )>1:
+                    # Upadate !!!
+                    RUNNING_DATA[WORD_ID][i] = ( THIS_PARA[i][1]*(TARGET_ALPHA - THIS_ALPHA) + (THIS_ALPHA-1)*RUNNING_DATA[WORD_ID][i] )/(TARGET_ALPHA-1);
+                    break;        
+            return;        
+        # adjust more:
+        TARGET_ALPHA = abs(TARGET_ALPHA)*1.40;
+        for i in range(RUNNING_DATA[WORD_ID].size  ):
+            if abs((THIS_PARA[i][0] - RUNNING_DATA[WORD_ID][i])/(THIS_PARA[i][1] - RUNNING_DATA[WORD_ID][i])    )>1:
+                # Upadate !!!
+                RUNNING_DATA[WORD_ID][i] = ( THIS_PARA[i][1]*(TARGET_ALPHA - THIS_ALPHA) + (THIS_ALPHA-1)*RUNNING_DATA[WORD_ID][i] )/(TARGET_ALPHA-1);
+                break;        
+        return;       
 
 class Queue(object):
     """docstring for Queue"""
@@ -263,22 +300,29 @@ class Ring(object):
                 self.VECTOR[i] = PARAMETERS[i] - 1.0;
 
     def optimize_vector(self,TARGET,PARAMETERS):
+        """ TARGET = -0.00001:  f(x) >0但希望调整至f(x)<0;
+            TARGET =  0.00001:  f(x) <0但希望调整至f(x)>0;
+        """
         if len(PARAMETERS)==2:
             self.optimize_vector_two(TARGET,PARAMETERS);
             return;
-        if self.polynomial_func(PARAMETERS) < TARGET: # TARGET >0 and f(x) <0;
+        if self.polynomial_func(PARAMETERS) < TARGET and TARGET>0: # TARGET >0 and f(x) <0;
+            # print('adj:'+str(PARAMETERS -self.VECTOR))
             for i in range(len(self.VECTOR)):
+                # print(PARAMETERS[i]-self.VECTOR[i])
                 if PARAMETERS[i]-self.VECTOR[i] <0:
+                    self.VECTOR[i] = PARAMETERS[i] - 1.0;
+                    return;
+        if self.polynomial_func(PARAMETERS) > TARGET and TARGET<0: # TARGET <0 and f(x) >0;            
+            # print('adj:'+str(PARAMETERS -self.VECTOR))
+            for i in range(len(self.VECTOR)):
+                # print(self.VECTOR)
+                if PARAMETERS[i]-self.VECTOR[i] >0:
                     self.VECTOR[i] = PARAMETERS[i] + 1.0;
                     return;
-        for i in range(len(self.VECTOR)):
-            # print(self.VECTOR)
-            if PARAMETERS[i]-self.VECTOR[i] >0:
-                self.VECTOR[i] = PARAMETERS[i] + 1.0;
-                return;
 
     def optimize_vector_two(self,TARGET,PARAMETERS):
-        if self.polynomial_func(PARAMETERS) < TARGET: # TARGET >0 and f(x,y) <0;
+        if self.polynomial_func(PARAMETERS) < TARGET and TARGET>0: # TARGET >0 and f(x,y) <0但希望调整至f(x,y)>0;
             # print(self.VECTOR)
             for i in range(len(self.VECTOR)):
                 if (PARAMETERS[0][i]-self.VECTOR[i])/(PARAMETERS[1][i]-self.VECTOR[i]) <0:
@@ -287,12 +331,12 @@ class Ring(object):
                         return;
                     self.VECTOR[i] = PARAMETERS[1][i] - 1.0;
                     return;
-        # TARGET <0 and f(x,y) >0;                
-        for i in range(len(self.VECTOR)):
-            if (PARAMETERS[0][i]-self.VECTOR[i])/(PARAMETERS[1][i]-self.VECTOR[i]) >0:
-                # print(self.VECTOR[i])
-                self.VECTOR[i] = (PARAMETERS[0][i]+PARAMETERS[1][i])/2;
-                return;                                        
+        if self.polynomial_func(PARAMETERS) > TARGET and TARGET<0: # TARGET <0 and f(x,y) >0但希望调整至f(x,y)<0;                
+            for i in range(len(self.VECTOR)):
+                if (PARAMETERS[0][i]-self.VECTOR[i])/(PARAMETERS[1][i]-self.VECTOR[i]) >0:
+                    # print(self.VECTOR[i])
+                    self.VECTOR[i] = (PARAMETERS[0][i]+PARAMETERS[1][i])/2;
+                    return;                                        
 
     def compute_divide_space(self):
         DIM = len(self.VECTOR);
@@ -361,6 +405,40 @@ def infer_established_section(RING_F,RING_G,PARAMETERS_X,PARAMETERS_Y,ALPHA):
 其中命题推理样例以字典对的形式封装
 """
 
+def print_pair(DICT_PAIR):
+    DICT_LEFT  = {}; # DICT_PAIR[0];
+    DICT_RIGHT = {}; # DICT_PAIR[1];
+    for FUNC,VARS in DICT_PAIR[0].items():
+        if type(VARS) == list:
+            VARS_LIST = [];
+            for VAR in VARS:VARS_LIST.append(make_data.resolve_ID(VAR,'SYMBOL'));
+            DICT_LEFT[make_data.resolve_ID(FUNC,'SYMBOL')] = VARS_LIST;
+            continue;
+        DICT_LEFT[make_data.resolve_ID(FUNC,'SYMBOL')] = make_data.resolve_ID(VARS,'SYMBOL');                        
+    for FUNC,VARS in DICT_PAIR[1].items():
+        if type(VARS) == list:
+            VARS_LIST = [];
+            for VAR in VARS:VARS_LIST.append(make_data.resolve_ID(VAR,'SYMBOL'));
+            DICT_RIGHT[make_data.resolve_ID(FUNC,'SYMBOL')] = VARS_LIST;
+            continue;
+        DICT_RIGHT[make_data.resolve_ID(FUNC,'SYMBOL')] = make_data.resolve_ID(VARS,'SYMBOL');    
+    # print(  ( DICT_LEFT , DICT_RIGHT ) );
+    LOGIC_PROP = '';
+    FIRST_FLAG = 0;
+    for FUNC,VARS in DICT_LEFT.items():
+        if FIRST_FLAG>0:LOGIC_PROP=LOGIC_PROP+'^';
+        FIRST_FLAG+=1;
+        if type(VARS) == list:LOGIC_PROP=LOGIC_PROP+FUNC+'('+ VARS[0] +','+ VARS[1] +')';continue;
+        LOGIC_PROP=LOGIC_PROP+FUNC+'('+ VARS +')';
+    LOGIC_PROP = LOGIC_PROP + '--->';
+    FIRST_FLAG = 0;
+    for FUNC,VARS in DICT_RIGHT.items():
+        if FIRST_FLAG>0:LOGIC_PROP=LOGIC_PROP+'^';
+        FIRST_FLAG+=1;
+        if type(VARS) == list:LOGIC_PROP=LOGIC_PROP+FUNC+'('+ VARS[0] +','+ VARS[1] +')';continue;
+        LOGIC_PROP=LOGIC_PROP+FUNC+'('+ VARS +')';
+    print(LOGIC_PROP);    
+        
 
 # -------------------- TEST FUNCTIONS ----------------------
 def TEST_make_a_ring(WORD_ID):
@@ -422,22 +500,32 @@ def TEST_tree_constructing(DELTA,TREE_NODE,DEEP):
 def TEST_optimize():
     X1 = np.array([1.,2.,3.,4.]);
     X2 = np.array([3.,6.,11.,14.]);
-    WORD_ID = 'ADJ___177';
+    WORD_ID = 'ADJ___132';
     WORD    = make_data.resolve_ID(WORD_ID,'SYMBOL');
     VECTOR  = make_data.resolve_ID(WORD_ID,'VECTOR');
     RING    = Ring(WORD_ID,WORD,VECTOR);
     print(RING.polynomial_func([X1,X2]));
-    RING.optimize_vector(.0001,[X1,X2]);
+    RING.optimize_vector(-0.00001,[X1,X2]);
     print(RING.polynomial_func([X1,X2]));
 
     print(RING.polynomial_func(X1));
-    RING.optimize_vector(-0.0001,X1);
+    RING.optimize_vector(0.00001,X1);
     print(RING.polynomial_func(X1));
 
 def TEST_optimize_logic_prop():
-    """   """
-    pass;
-
+    """ ({'ADJ___144':'NN___17','ADV___100':'ADJ___144','PR___44':'NN___17'},{'ADJ___121':''NN___152'','ADV___100':['NN___124','NN___152']}) """
+    DICT_PAIR = ({'ADJ___144':'NN___17','ADV___100':'ADJ___144','PR___44':'NN___17'},{'ADJ___121':'NN___152','ADV___100':['NN___174','NN___152']});
+    print_pair(DICT_PAIR);
+    read_data();
+    LOGIC_PROPROGRATION = Logic_Proposition(DICT_PAIR);
+    print('===== establish Ring-based Logic Proposition ======');
+    print(LOGIC_PROPROGRATION.RING_PARA_PAIR_CD);
+    print(LOGIC_PROPROGRATION.RING_PARA_PAIR_CC);
+    print('===== execute Ring-based Logic Proposition OPTIMIZATION ======');
+    LOGIC_PROPROGRATION.optimize_self();
+    # LOGIC_PROPROGRATION.compute_predicate_values();
+    print(LOGIC_PROPROGRATION.RING_PARA_PAIR_CD);
+    print(LOGIC_PROPROGRATION.RING_PARA_PAIR_CC);
 
 if __name__ == '__main__':
     # TEST_make_a_ring(); 
@@ -447,3 +535,4 @@ if __name__ == '__main__':
     # TEST_build_bitree();
     # TEST_space_constructing_by_queue(2.0,4);
     TEST_optimize();
+    # TEST_optimize_logic_prop();
