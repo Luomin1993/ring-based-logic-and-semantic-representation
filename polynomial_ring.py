@@ -193,24 +193,24 @@ class Logic_Proposition(object):
         # adjust less:
         if TARGET_ALPHA<0:
         	# 如果已经满足....
-            if THIS_ALPHA<abs(TARGET_ALPHA):return;
+            if THIS_ALPHA<abs(TARGET_ALPHA) and TARGET_ALPHA<0:return;
             TARGET_ALPHA = (abs(TARGET_ALPHA) - ALPHA)*0.70 + ALPHA;
-            # print('EXCEPT'+str(TARGET_ALPHA));
+            if abs(THIS_ALPHA-19)<1:print('EXCEPT:  '+str(TARGET_ALPHA));
             for i in range(RUNNING_DATA[WORD_ID].size ):
                 if abs(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])>1:
                     # Upadate !!!
-                    RUNNING_DATA[WORD_ID][i] = RUNNING_DATA[WORD_ID][i] - TARGET_ALPHA*(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])/THIS_ALPHA;
+                    RUNNING_DATA[WORD_ID][i] = THIS_PARA[i] - TARGET_ALPHA*(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])/THIS_ALPHA;
                     break;        
             return;        
         # adjust more:
         # 如果已经满足....
-        if THIS_ALPHA>abs(TARGET_ALPHA):return;
+        if THIS_ALPHA>abs(TARGET_ALPHA)  and TARGET_ALPHA>0:return;
         TARGET_ALPHA = abs(TARGET_ALPHA)*1.40;
         # print('EXCEPT'+str(TARGET_ALPHA)+'   '+str(THIS_ALPHA));
         for i in range(RUNNING_DATA[WORD_ID].size ):
             if abs(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])>1:
                 # Upadate !!!
-                RUNNING_DATA[WORD_ID][i] = RUNNING_DATA[WORD_ID][i] - TARGET_ALPHA*(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])/THIS_ALPHA;
+                RUNNING_DATA[WORD_ID][i] = THIS_PARA[i] - TARGET_ALPHA*(THIS_PARA[i] - RUNNING_DATA[WORD_ID][i])/THIS_ALPHA;
                 break;        
         return;            
 
@@ -221,23 +221,27 @@ class Logic_Proposition(object):
         THIS_PARA = RING_PARA_PAIR[1];
         # adjust less:
         # 如果已经满足....
-        if THIS_ALPHA<abs(TARGET_ALPHA):return;
+        if THIS_ALPHA<abs(TARGET_ALPHA) and TARGET_ALPHA<0:return;
         if TARGET_ALPHA<0:
             TARGET_ALPHA = abs(TARGET_ALPHA)*0.70;
             for i in range(RUNNING_DATA[WORD_ID].size  ):
                 if abs((THIS_PARA[i][0] - RUNNING_DATA[WORD_ID][i])/(THIS_PARA[i][1] - RUNNING_DATA[WORD_ID][i])    )>1:
                     # Upadate !!!
-                    RUNNING_DATA[WORD_ID][i] = ( THIS_PARA[i][1]*(TARGET_ALPHA - THIS_ALPHA) + (THIS_ALPHA-1)*RUNNING_DATA[WORD_ID][i] )/(TARGET_ALPHA-1);
+                    DELTA_1 = THIS_ALPHA*(THIS_PARA[1][i] - RUNNING_DATA[WORD_ID][i]);
+                    DELTA_2 = THIS_PARA[0][i] - RUNNING_DATA[WORD_ID][i];
+                    RUNNING_DATA[WORD_ID][i] = ( DELTA_2*TARGET_ALPHA*THIS_PARA[1][i] - DELTA_1*THIS_PARA[0][i])/(DELTA_2*TARGET_ALPHA - DELTA_1);
                     break;        
             return;        
         # adjust more:
         # 如果已经满足....
-        if THIS_ALPHA>abs(TARGET_ALPHA):return;
+        if THIS_ALPHA>abs(TARGET_ALPHA) and TARGET_ALPHA>0:return;
         TARGET_ALPHA = abs(TARGET_ALPHA)*1.40;
         for i in range(RUNNING_DATA[WORD_ID].size  ):
             if abs((THIS_PARA[0][i] - RUNNING_DATA[WORD_ID][i])/(THIS_PARA[1][i] - RUNNING_DATA[WORD_ID][i])    )>1:
                 # Upadate !!!
-                RUNNING_DATA[WORD_ID][i] = ( THIS_PARA[i][1]*(TARGET_ALPHA - THIS_ALPHA) + (THIS_ALPHA-1)*RUNNING_DATA[WORD_ID][i] )/(TARGET_ALPHA-1);
+                DELTA_1 = THIS_ALPHA*(THIS_PARA[1][i] - RUNNING_DATA[WORD_ID][i]);
+                DELTA_2 = THIS_PARA[0][i] - RUNNING_DATA[WORD_ID][i];
+                RUNNING_DATA[WORD_ID][i] = ( DELTA_2*TARGET_ALPHA*THIS_PARA[1][i] - DELTA_1*THIS_PARA[0][i])/(DELTA_2*TARGET_ALPHA - DELTA_1);
                 break;        
         return;       
 
@@ -531,7 +535,7 @@ def TEST_optimize():
 
 def TEST_optimize_logic_prop():
     """ ({'ADJ___144':'NN___17','ADV___100':'ADJ___144','PR___44':'NN___17'},{'ADJ___121':''NN___152'','ADV___100':['NN___124','NN___152']}) """
-    DICT_PAIR = ({'ADJ___144':'NN___17','ADV___100':'ADJ___144','PR___44':'NN___17'},{'ADJ___121':'NN___152','ADV___100':['NN___174','NN___152']});
+    DICT_PAIR = ({'ADJ___144':'NN___17','ADV___100':'ADJ___144','PR___44':'NN___17'},{'ADJ___121':'NN___152','ADV___101':['NN___174','NN___152']});
     print_pair(DICT_PAIR);
     read_data();
     LOGIC_PROPROGRATION = Logic_Proposition(DICT_PAIR);
