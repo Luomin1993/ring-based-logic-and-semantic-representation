@@ -1,6 +1,7 @@
 # ring-based logic and semantic representation
 
-Generally speaking, this is a new way to express learning and reasoning
+Generally speaking, this is a new way for representation learning and reasoning;
+
 By combining predicate logic, we propose a fuzzy reasoning mechanism based on polynomial rings... ...
 
 ```
