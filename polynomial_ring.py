@@ -288,6 +288,7 @@ class Ring(object):
         super(Ring, self).__init__()
         self.WORD_ID      =    WORD_ID;
         self.VECTOR       =     VECTOR;
+        self.PARAMETERS   =       None;
         self.POLYNOMIAL   =       None;
         self.WORD         =       WORD;
         self.GRAPH        =       None;
