@@ -67,8 +67,30 @@ def train_process():
     LOGIC_PROP_SET = [];
     for DICT_PAIR in EXPIRIENCE_SET:
         LOGIC_PROP_SET.append(polynomial_ring.Logic_Proposition( DICT_PAIR )  );
+    # for LOGIC_PROP in LOGIC_PROP_SET:
+    #     polynomial_ring.print_pair(LOGIC_PROP.DICT_PAIR);
+    # second: training;
+    SELECTED_ID = 0;NOW_ID=-1;
     for LOGIC_PROP in LOGIC_PROP_SET:
+        NOW_ID+=1;
+        if SELECTED_ID != NOW_ID:
+            continue;
         polynomial_ring.print_pair(LOGIC_PROP.DICT_PAIR);
+        print('===== establish Ring-based Logic Proposition ======');
+        print(LOGIC_PROP.RING_PARA_PAIR_CD);
+        print(LOGIC_PROP.RING_PARA_PAIR_CC);
+        print('===== execute Ring-based Logic Proposition OPTIMIZATION ======');
+        LOGIC_PROP.optimize_self();
+        print(LOGIC_PROP.RING_PARA_PAIR_CD);
+        print(LOGIC_PROP.RING_PARA_PAIR_CC);
+    # third: evaluation;
+    # for LOGIC_PROP in LOGIC_PROP_SET:
+    #     VALUES_SET_CD = [ STATE[2] for STATE in LOGIC_PROP.RING_PARA_PAIR_CD ];
+    #     VALUES_SET_CC = [ STATE[2] for STATE in LOGIC_PROP.RING_PARA_PAIR_CC ];    
+    #     if max(VALUES_SET_CD)<min(VALUES_SET_CC):print('---Reasoning---');
+    #     else:print('Wrong!!!');
+    #     if min(VALUES_SET_CD)>ALPHA and min(VALUES_SET_CC)>ALPHA:print('---Optimizing---');
+    #     else:print('Wrong!!!');
 
 
 # -------------------- MADE FUNCTIONS ----------------------
