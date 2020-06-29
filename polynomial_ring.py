@@ -116,7 +116,7 @@ class Logic_Proposition(object):
         self.CONCLUSIONS = [];
         self.RING_PARA_PAIR_CD = [];  # 条件...
         self.RING_PARA_PAIR_CC = [];  # 结论...
-        self.compute_predicate_values();
+        # self.compute_predicate_values();
 
     def compute_predicate_values(self):
         for PREDICATE,NOUN in self.DICT_PAIR[0].items():
@@ -135,6 +135,7 @@ class Logic_Proposition(object):
             self.RING_PARA_PAIR_CD.append( [ THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ] ); # ALPHA是期望调整值 -5代表期望小于5 5代表期望大于5;
             RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR;  # 更新全局变量;
         for PREDICATE,NOUN in self.DICT_PAIR[1].items():
+            # BUG_DEBUG(PREDICATE + ' ---- ' + str(RUNNING_DATA['PR___147']));
             THIS_WORD = make_data.resolve_ID(PREDICATE,'SYMBOL');
             THIS_ID   = PREDICATE;
             THIS_VEC  = RUNNING_DATA[PREDICATE];
@@ -148,31 +149,35 @@ class Logic_Proposition(object):
                 RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR;  # 更新全局变量;
             THIS_ALPHA = THIS_RING.polynomial_func(THIS_PARA); # 更新ALPHA;
             # ************** BUG 0627 **********************
-            if abs(THIS_ALPHA-40.20)<.01:
-                print('Catch U!!!!!'+str(THIS_ALPHA));
-                print(RUNNING_DATA[THIS_RING.WORD_ID]);
+            # if abs(THIS_ALPHA-40.20)<.01:                  # ---------------------------------------------------------------->>>>>
+            #     print('Catch U!!!!!'+str(THIS_ALPHA));     # ---------------------------------------------------------------->>>>>
+            #     print(RUNNING_DATA[THIS_RING.WORD_ID]);    # ---------------------------------------------------------------->>>>>
             self.RING_PARA_PAIR_CC.append( [ THIS_RING,THIS_PARA, THIS_ALPHA,ALPHA  ] ); # ALPHA是期望调整值 -5代表期望小于5 5代表期望大于5;    
             RUNNING_DATA[THIS_RING.WORD_ID] = THIS_RING.VECTOR;  # 更新全局变量;
-            if abs(THIS_ALPHA-40.20)<.01:
-                print(RUNNING_DATA[THIS_RING.WORD_ID]);
-                print(THIS_RING.WORD_ID);
+            # ************** BUG 0627 **********************
+            # if abs(THIS_ALPHA-40.20)<.01:   # ---------------------------------------------------------------->>>>>
+            #     print(RUNNING_DATA[THIS_RING.WORD_ID]);   # ---------------------------------------------------------------->>>>>
+            #     print(THIS_RING.WORD_ID);   # ---------------------------------------------------------------->>>>>
     
     def optimize_self(self):
+        """ Zeroznly,adjust the f(x) > 0; """
+        self.compute_predicate_values();
         """ Firstly,adjust the f(x) into > alpha_0; """
         for i in range(len(self.RING_PARA_PAIR_CD)):
             self.adjust_to_excepted_value(self.RING_PARA_PAIR_CD[i]);
             self.RING_PARA_PAIR_CD[i][0].VECTOR = RUNNING_DATA[self.RING_PARA_PAIR_CD[i][0].WORD_ID]; # 更新内部VECTOR;
             self.RING_PARA_PAIR_CD[i][2] = self.RING_PARA_PAIR_CD[i][0].polynomial_func(self.RING_PARA_PAIR_CD[i][1]); # 更新内部ALPHA;
         for i in range(len(self.RING_PARA_PAIR_CC)):
-            if self.RING_PARA_PAIR_CC[i][2]<41 and self.RING_PARA_PAIR_CC[i][2]>40:
-                print(   RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]  );
+            # ************** BUG 0627 **********************
+            # if self.RING_PARA_PAIR_CC[i][2]<41 and self.RING_PARA_PAIR_CC[i][2]>40:  # ---------------------------------------------------------------->>>>>
+            #     print(   RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]  );  # ---------------------------------------------------------------->>>>>
             self.adjust_to_excepted_value(self.RING_PARA_PAIR_CC[i]); 
             # ************** BUG 0627 **********************
-            if self.RING_PARA_PAIR_CC[i][2]<41 and self.RING_PARA_PAIR_CC[i][2]>40:
-                print(self.RING_PARA_PAIR_CC[i][0].VECTOR);
-                print(RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]);   
-                print(self.RING_PARA_PAIR_CC[i][0].polynomial_func(self.RING_PARA_PAIR_CC[i][1]));
-                print(   np.cumprod(   self.RING_PARA_PAIR_CC[i][1]  - self.RING_PARA_PAIR_CC[i][0].VECTOR    )[-1]  );
+            # if self.RING_PARA_PAIR_CC[i][2]<41 and self.RING_PARA_PAIR_CC[i][2]>40:         # ---------------------------------------------------------------->>>>>      
+            #     print(self.RING_PARA_PAIR_CC[i][0].VECTOR);                                 # ---------------------------------------------------------------->>>>>
+            #     print(RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]);                  # ---------------------------------------------------------------->>>>>
+            #     print(self.RING_PARA_PAIR_CC[i][0].polynomial_func(self.RING_PARA_PAIR_CC[i][1]));  # ---------------------------------------------------------------->>>>>
+            #     print(   np.cumprod(   self.RING_PARA_PAIR_CC[i][1]  - self.RING_PARA_PAIR_CC[i][0].VECTOR    )[-1]  );  # ---------------------------------------------------------------->>>>>
             self.RING_PARA_PAIR_CC[i][0].VECTOR = RUNNING_DATA[self.RING_PARA_PAIR_CC[i][0].WORD_ID]; # 更新内部VECTOR;
             self.RING_PARA_PAIR_CC[i][2] = self.RING_PARA_PAIR_CC[i][0].polynomial_func(self.RING_PARA_PAIR_CC[i][1]); # 更新内部ALPHA;
         """ Secondly,adjust the alpha_0 < p_min(y_n) < q_min(x_n)"""    
@@ -563,9 +568,12 @@ def TEST_optimize_logic_prop():
     print(LOGIC_PROPROGRATION.RING_PARA_PAIR_CD);
     print(LOGIC_PROPROGRATION.RING_PARA_PAIR_CC);
 
+def BUG_DEBUG(SOMETHING_TO_PRINT):
+    print(' ******DEBUG VALUE****** :'+str(SOMETHING_TO_PRINT));
+
 def train_process():
     # first: read data;
-    read_data();
+    read_data();  BUG_DEBUG(RUNNING_DATA['PR___147']);
     SAVED_FILE = open('expirience_set.dst','rb');
     EXPIRIENCE_SET = pickle.load(SAVED_FILE);
     LOGIC_PROP_SET = [];
@@ -574,6 +582,7 @@ def train_process():
     # for LOGIC_PROP in LOGIC_PROP_SET:
     #     print_pair(LOGIC_PROP.DICT_PAIR);
     # second: training;
+    BUG_DEBUG(RUNNING_DATA['PR___147']);
     SELECTED_ID = 0;NOW_ID=-1;
     for LOGIC_PROP in LOGIC_PROP_SET:
         NOW_ID+=1;
@@ -583,8 +592,9 @@ def train_process():
         print('===== establish Ring-based Logic Proposition ======');
         print(LOGIC_PROP.RING_PARA_PAIR_CD);
         print(LOGIC_PROP.RING_PARA_PAIR_CC);
-        print(   RUNNING_DATA[ LOGIC_PROP.RING_PARA_PAIR_CC[0][0].WORD_ID ]  );
-        print(   LOGIC_PROP.RING_PARA_PAIR_CC[0][0].WORD_ID  );
+        # print(   RUNNING_DATA[ LOGIC_PROP.RING_PARA_PAIR_CC[0][0].WORD_ID ]  );
+        # print(   LOGIC_PROP.RING_PARA_PAIR_CC[0][0].WORD_ID  );
+        BUG_DEBUG(RUNNING_DATA['PR___147']);
         print('===== execute Ring-based Logic Proposition OPTIMIZATION ======');
         LOGIC_PROP.optimize_self();
         print(LOGIC_PROP.RING_PARA_PAIR_CD);

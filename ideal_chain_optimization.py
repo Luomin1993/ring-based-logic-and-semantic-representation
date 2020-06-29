@@ -70,6 +70,16 @@ def train_process():
     # for LOGIC_PROP in LOGIC_PROP_SET:
     #     polynomial_ring.print_pair(LOGIC_PROP.DICT_PAIR);
     # second: training;
+    for LOGIC_PROP in LOGIC_PROP_SET:
+        # polynomial_ring.print_pair(LOGIC_PROP.DICT_PAIR);
+        print('===== establish Ring-based Logic Proposition ======');
+        polynomial_ring.print_pair(LOGIC_PROP.DICT_PAIR);
+        print('===== execute Ring-based Logic Proposition OPTIMIZATION ======');
+        LOGIC_PROP.optimize_self();
+        print(LOGIC_PROP.RING_PARA_PAIR_CD);
+        print(LOGIC_PROP.RING_PARA_PAIR_CC);
+    # *********** DEBUG PROCESS ****************
+    """
     SELECTED_ID = 0;NOW_ID=-1;
     for LOGIC_PROP in LOGIC_PROP_SET:
         NOW_ID+=1;
@@ -83,15 +93,19 @@ def train_process():
         LOGIC_PROP.optimize_self();
         print(LOGIC_PROP.RING_PARA_PAIR_CD);
         print(LOGIC_PROP.RING_PARA_PAIR_CC);
+    """    
     # third: evaluation;
-    # for LOGIC_PROP in LOGIC_PROP_SET:
-    #     VALUES_SET_CD = [ STATE[2] for STATE in LOGIC_PROP.RING_PARA_PAIR_CD ];
-    #     VALUES_SET_CC = [ STATE[2] for STATE in LOGIC_PROP.RING_PARA_PAIR_CC ];    
-    #     if max(VALUES_SET_CD)<min(VALUES_SET_CC):print('---Reasoning---');
-    #     else:print('Wrong!!!');
-    #     if min(VALUES_SET_CD)>ALPHA and min(VALUES_SET_CC)>ALPHA:print('---Optimizing---');
-    #     else:print('Wrong!!!');
-
+    NUM_RIGHT_ONES = 0;
+    NUM_WRONG_ONES = 0;
+    for LOGIC_PROP in LOGIC_PROP_SET:
+        VALUES_SET_CD = [ STATE[2] for STATE in LOGIC_PROP.RING_PARA_PAIR_CD ];
+        VALUES_SET_CC = [ STATE[2] for STATE in LOGIC_PROP.RING_PARA_PAIR_CC ];    
+        if max(VALUES_SET_CD)<min(VALUES_SET_CC):NUM_RIGHT_ONES+=1; # print('---Reasoning---');
+        else:NUM_WRONG_ONES+=1; # print('Wrong!!!');
+        if min(VALUES_SET_CD)>ALPHA and min(VALUES_SET_CC)>ALPHA:NUM_RIGHT_ONES+=1; # print('---Optimizing---');
+        else:NUM_WRONG_ONES+=1; # print('Wrong!!!');
+    print(' ####################### R E S U L T  ################################ ');
+    print('Accuracy : '+str( float(NUM_RIGHT_ONES)/(NUM_RIGHT_ONES + NUM_WRONG_ONES) ) );
 
 # -------------------- MADE FUNCTIONS ----------------------
 
